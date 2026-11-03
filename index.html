@@ -11,7 +11,9 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
+<style id="lock">#newbtn,#newform,#wsave,#wdel,#mybtn,#mylist{display:none!important}</style>
 <title>Peshorja e barit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap">
@@ -127,6 +129,11 @@ button.pri:active{transform:translateY(1px)}
 .tabs b{display:inline-block;min-width:22px;padding:1px 6px;margin-left:6px;border-radius:99px;background:var(--liq2);color:#12201c;font-size:14px}
 .det{margin:2px 0 12px;padding:10px 12px;border-radius:12px;background:var(--bg);border:1px solid var(--line)}.di{display:flex;justify-content:space-between;gap:10px;padding:6px 0;font-size:15px;border-bottom:1px solid var(--line)}.di:last-child{border:0}.di b{white-space:nowrap}.tt{font-weight:700}
 .tgt{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:14px;background:var(--liq2);color:#12201c;font-weight:600}.tgt button{margin:0;width:auto;padding:8px 14px;background:#12201c;color:#f3fbf7;border:0;border-radius:10px}
+.lnk{width:100%;margin-top:10px;background:var(--tint);border-style:dashed;color:var(--accent);font-weight:600}
+#newform{margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--bg);display:flex;flex-direction:column;gap:12px}
+#newform h3{margin:0;font:600 18px var(--f-head,inherit)}
+#newform .btns2{display:flex;gap:10px}#newform .btns2 button{flex:1}
+.mini{width:100%;margin-top:10px}
 </style>
 
 <main>
@@ -145,6 +152,23 @@ button.pri:active{transform:translateY(1px)}
 <input id="q" type="search" placeholder="p.sh. Absolut, Jack, Martini" autocomplete="off" autocapitalize="off" spellcheck="false" style="margin-top:0">
 </div>
 <div id="sr" hidden role="listbox" aria-label="Rezultatet e kërkimit"></div>
+<button type="button" class="lnk" id="newbtn">+ Shto pije të re</button>
+<button type="button" class="lnk" id="mybtn" style="margin-top:6px">📋 Pijet e mia (0)</button>
+<div id="mylist" hidden></div>
+<div id="newform" hidden>
+<h3>Pije e re</h3>
+<label for="nn">Emri i pijes<input id="nn" type="text" maxlength="40" placeholder="p.sh. Vodka Zubrowka" autocomplete="off"></label>
+<div class="row2">
+<label for="ng">Lloji<select id="ng"><option value="0.948">Vodka</option><option value="0.948">Uiski</option><option value="0.948">Konjak / brandy</option><option value="0.948">Rakia</option><option value="0.945">Rum</option><option value="0.945">Xhin</option><option value="0.945">Tekila</option><option value="1.05">Liker</option><option value="1.00">Aperitiv</option><option value="1.00">Tjetër</option></select></label>
+<label for="nv">Madhësia<select id="nv"></select></label>
+</div>
+<div class="row2">
+<label for="nf">Plot (g)<input id="nf" type="number" inputmode="decimal" placeholder="p.sh. 1520"></label>
+<label for="ne">Zbrazët (g)<input id="ne" type="number" inputmode="decimal" placeholder="opsionale"></label>
+</div>
+<p class="err" id="nerr" role="alert"></p>
+<div class="btns2"><button type="button" class="pri" id="nsave" style="margin-top:0">Ruaj pijen</button><button type="button" id="ncancel">Anulo</button></div>
+</div>
 </div>
 <label for="type">Ose zgjidhe nga lista
 <select id="type">
@@ -280,13 +304,15 @@ button.pri:active{transform:translateY(1px)}
 </div>
 </div>
 <details>
-<summary>Kam pesha të sakta (opsionale)</summary>
+<summary>Pesha e shishes (ruhet vetë)</summary>
 <div class="row2" style="margin-top:8px">
 <label for="full">Shishja e plotë (g)
 <input id="full" type="number" inputmode="decimal" placeholder="nuk e di"></label>
 <label for="empty">Shishja e zbrazët (g)
 <input id="empty" type="number" inputmode="decimal" placeholder="nuk e di"></label>
 </div>
+<button type="button" class="mini" id="wsave">Ruaj peshën</button>
+<button type="button" class="mini" id="wdel" hidden>Fshi këtë pije</button>
 </details>
 <p class="err" id="err" role="alert"></p>
 </section>
@@ -423,9 +449,18 @@ await saveFile(fileBase(name,iso)+'.csv','﻿'+rows.map(r=>r.map(c=>'"'+String(c
 function alert0(){const b=$('tab2');b.textContent='Pastro listën fillimisht';setTimeout(()=>{b.innerHTML='Të ruajturat<b id="cnt">'+saved.length+'</b>'},2500)}
 function arm(btn,label,fn){let t=null;btn.onclick=()=>{if(t===null){btn.textContent='Sigurt?';t=setTimeout(()=>{t=null;btn.textContent=label},3000);return}clearTimeout(t);t=null;btn.textContent=label;fn()}}
 function saveLocalSaved(){try{localStorage.setItem('bar_saved',JSON.stringify(saved))}catch(e){}}
-let view=1,target=null;
-function setView(v){view=v;document.querySelectorAll('.vm').forEach(e=>e.hidden=v!==1);$('savedcard').hidden=v!==2;$('tab1').setAttribute('aria-selected',v===1);$('tab2').setAttribute('aria-selected',v===2);$('listcard').hidden=v!==1||!!target;$('tgt').hidden=!(target&&v===1);window.scrollTo({top:0})}
-$('tgtx').onclick=()=>{target=null;setView(2)};
+let view=1,target=null,edit=null;
+function setView(v){view=v;document.querySelectorAll('.vm').forEach(e=>e.hidden=v!==1);$('savedcard').hidden=v!==2;$('tab1').setAttribute('aria-selected',v===1);$('tab2').setAttribute('aria-selected',v===2);$('listcard').hidden=v!==1||!!target;$('tgt').hidden=!((target||edit)&&v===1);window.scrollTo({top:0})}
+function endEdit(){const w=edit&&edit.rec?2:1;edit=null;$('add').textContent='Shto në listë';$('cur').value='';calc();setView(w)}
+$('tgtx').onclick=()=>{if(edit){endEdit();return}target=null;setView(2)};
+function startEdit(arr,idx,rec){
+const x=arr[idx];let tv=null,vv=null;
+if(x.t){tv=x.t;vv=x.v}else{let best=null;[...$('type').options].forEach(o=>{const n=o.value.split('|')[2];if(x.name.startsWith(n+' ')&&(!best||n.length>best.n.length))best={o:o,n:n}});
+if(best){tv=best.o.value;const rest=x.name.slice(best.n.length+1);const vo=[...$('vol').options].find(o=>o.text===rest);vv=vo?vo.value:null}}
+if(!tv){say('Kjo pije nuk gjendet në listë. Fshije dhe shtoje përsëri.');return}
+target=null;edit={arr:arr,idx:idx,rec:rec};
+$('type').value=tv;pick();if(vv)$('vol').value=vv;loadW();$('cur').value=x.g||'';calc();
+$('tgtn').textContent='Po ndryshon peshën: '+x.name;$('add').textContent='Ruaj ndryshimin';setView(1);$('cur').focus()}
 $('tab1').onclick=()=>{setView(1)};$('tab2').onclick=()=>setView(2);
 function renderSaved(){
 const S=$('saved');S.textContent='';
@@ -441,7 +476,7 @@ const bt=document.createElement('div');bt.className='btns';
 const mk=(label)=>{const b=document.createElement('button');b.type='button';b.textContent=label;bt.appendChild(b);return b};
 const bp=mk('Shto pije'),bo=mk('Hap'),bc=mk('Kopjo'),bx=mk('Excel'),bd=mk('Fshi');
 const dt=document.createElement('div');dt.className='det';dt.hidden=true;
-r.items.forEach(x=>{const d=document.createElement('div');d.className='di';const a1=document.createElement('span');a1.textContent=x.name;const b1=document.createElement('b');b1.textContent=(x.ml/1000).toFixed(2)+' L · '+x.pct+'%';d.append(a1,b1);dt.appendChild(d)});
+r.items.forEach((x,xi)=>{const d=document.createElement('div');d.className='di';const a1=document.createElement('span');a1.textContent=x.name;const b1=document.createElement('b');b1.textContent=(x.ml/1000).toFixed(2)+' L · '+x.pct+'%';const be=document.createElement('button');be.type='button';be.textContent='Ndrysho';be.style.cssText='margin:0 0 0 8px;width:auto;padding:4px 10px;font-size:13px';be.onclick=()=>startEdit(r.items,xi,r);d.append(a1,b1,be);dt.appendChild(d)});
 const tt=document.createElement('div');tt.className='di tt';const ta=document.createElement('span');ta.textContent='Totali';const tb=document.createElement('b');tb.textContent=L2(t.ml)+' L';tt.append(ta,tb);dt.appendChild(tt);
 bp.onclick=()=>{target=r;$('tgtn').textContent='Po shton te '+r.name+' ('+r.items.length+' shishe)';setView(1)};
 bo.onclick=()=>{dt.hidden=!dt.hidden;bo.textContent=dt.hidden?'Hap':'Mbyll'};
@@ -496,7 +531,8 @@ $('type').addEventListener('change',()=>{$('cur').value='';pick()});
 $('add').onclick=()=>{
 calc();if(!cur)return;
 const nm=$('type').value.split('|')[2]+' '+($('vol').selectedOptions[0].text);
-const it={name:nm,ml:cur.ml,pct:cur.pct,doses:cur.doses};
+const it={name:nm,ml:cur.ml,pct:cur.pct,doses:cur.doses,t:$('type').value,v:$('vol').value,g:+$('cur').value};
+if(edit){const E=edit;E.arr[E.idx]=it;if(E.rec){saveLocalSaved();if(COL)COL.doc(E.rec.id).set(E.rec).catch(()=>{});renderSaved()}else{save();render()}endEdit();say('✓ Pesha u ndryshua.');return}
 if(target){target.items.push(it);saveLocalSaved();if(COL)COL.doc(target.id).set(target).catch(()=>{});renderSaved();$('tgtn').textContent='✓ U shtua te '+target.name+' ('+target.items.length+' shishe)';return}
 items.push(it);
 save();render();
@@ -536,13 +572,68 @@ $('q').addEventListener('keydown',e=>{
 if(e.key==='Enter'){const b=$('sr').querySelector('.hit');if(b){e.preventDefault();b.click()}}
 if(e.key==='Escape'){$('q').value='';searchRun()}
 });
+let customs=[];try{customs=JSON.parse(localStorage.getItem('bar_custom')||'[]')||[]}catch(e){customs=[]}
+function saveCustoms(){try{localStorage.setItem('bar_custom',JSON.stringify(customs))}catch(e){}if(typeof updMy==='function'&&$('mybtn'))updMy()}
+const GM={'Vodka':'Vodka','Uiski':'Uiski','Konjak / brandy':'Konjak dhe brandy','Rakia':'Rakia','Rum':'Rum','Xhin':'Xhin','Tekila':'Tekila','Liker':'Liker','Aperitiv':'Aperitiv dhe të tjera','Tjetër':'Aperitiv dhe të tjera'};
+function addCustomOption(c){
+const val=c.d+'|40|'+c.name+'|'+c.v;
+const ex=[...$('type').options].find(o=>o.value===val);if(ex)return ex;
+const GFIX={'LongMorn':'Uiski','Glen Morangie':'Uiski','Chivas Regal 18':'Uiski','Gin Fire&Ice':'Xhin','Courvaizie VSOP':'Konjak dhe brandy'};
+const gl=c.g||GFIX[c.name]||'';
+let g=gl&&[...$('type').querySelectorAll('optgroup')].find(x=>x.label===gl);
+if(!g){g=document.getElementById('gmy');if(!g){g=document.createElement('optgroup');g.id='gmy';g.label='Pijet e mia';$('type').appendChild(g)}}
+const o=document.createElement('option');o.value=val;o.textContent=c.name;o.dataset.my='1';
+const after=[...g.children].find(x=>x.textContent.localeCompare(c.name,'sq')>0);
+if(after)g.insertBefore(o,after);else g.appendChild(o);
+OPT.push({o:o,n:norm(c.name),g:g.label});
+return o;
+}
+function isCustom(o){return !!(o&&o.dataset&&o.dataset.my==='1')}
+function delCustom(c){
+const o=[...$('type').options].find(x=>x.value===c.d+'|40|'+c.name+'|'+c.v)||[...$('type').options].find(x=>isCustom(x)&&x.value.split('|')[2]===c.name&&x.value.split('|')[3]===c.v);
+customs=customs.filter(x=>!(x.name===c.name&&x.v===c.v));saveCustoms();
+delete wts[c.name+'|'+c.v];try{localStorage.setItem('bar_weights',JSON.stringify(wts))}catch(err){}
+if(o){const i=OPT.findIndex(x=>x.o===o);if(i>=0)OPT.splice(i,1);const was=$('type').selectedOptions[0]===o;o.remove();if(was){$('type').selectedIndex=0;pick()}}
+touched=true;sync();updDel();updMy();
+}
+function updMy(){
+const vis=customs.filter(c=>!c.hid);$('mybtn').textContent='📋 Pijet e mia ('+vis.length+')';
+const L=$('mylist');if(L.hidden)return;
+L.textContent='';
+const nt=document.createElement('p');nt.className='empty';nt.textContent='Pijet që ke shtuar ti. Shtyp emrin për ta hapur. "Hiq" e heq vetëm nga kjo listë, pija mbetet në listën e pijeve.';L.appendChild(nt);
+if(!vis.length){const p=document.createElement('p');p.className='empty';p.textContent='Lista është bosh.';L.appendChild(p);return}
+vis.slice().sort((a,b)=>a.name.localeCompare(b.name,'sq')).forEach(c=>{
+const r=document.createElement('div');r.style.cssText='display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line,rgba(255,255,255,.12))';
+const w=wts[c.name+'|'+c.v]||{};
+const bits=[(+c.v/1000).toFixed(2)+' L'];
+if(w.f)bits.push('plotë '+w.f+' g');
+if(w.e)bits.push('zbrazët '+w.e+' g');
+if(!w.f&&!w.e)bits.push('pa peshë');
+const n=document.createElement('div');n.style.cssText='min-width:0;cursor:pointer';
+const a1=document.createElement('div');a1.style.cssText='font-weight:700;overflow-wrap:anywhere';a1.textContent=c.name;
+const s2=document.createElement('div');s2.style.cssText='font-size:13px;opacity:.75;margin-top:2px';s2.textContent=bits.join(' · ');
+n.append(a1,s2);
+n.onclick=()=>{const o=[...$('type').options].find(x=>x.value===c.d+'|40|'+c.name+'|'+c.v);if(o){choose(o);$('mylist').hidden=true;window.scrollTo({top:0,behavior:'smooth'})}};
+const bd=document.createElement('button');bd.type='button';bd.textContent='Hiq';bd.style.cssText='width:auto;margin:0;padding:8px 14px;min-width:64px';
+r.append(n,bd);L.appendChild(r);
+arm(bd,'Hiq',()=>{c.hid=true;saveCustoms();touched=true;sync();say('U hoq nga kjo listë. Pija mbetet në listën e pijeve.')});
+});
+}
+$('mybtn').onclick=()=>{const L=$('mylist');L.hidden=!L.hidden;updMy()};
+function updDel(){const o=$('type').selectedOptions[0];$('wdel').hidden=!isCustom(o)}
+customs.forEach(addCustomOption);updMy();
+const PRE=[{d:'0.948',name:'LongMorn',v:'700',g:'Uiski'},{d:'0.948',name:'Glen Morangie',v:'700',g:'Uiski'},{d:'0.948',name:'Chivas Regal 18',v:'700',g:'Uiski'},{d:'0.945',name:'Gin Fire&Ice',v:'1000',g:'Xhin'},{d:'0.948',name:'Courvaizie VSOP',v:'1000',g:'Konjak dhe brandy'}];
+PRE.forEach(c=>addCustomOption(c));
+Object.assign(DEF,{"Chivas Regal 18|700":{"e":"955"},"Courvaizie VSOP|1000":{"e":"697"},"Gin Fire&Ice|1000":{"f":"1618"},"Glen Morangie|700":{"e":"470"},"LongMorn|700":{"e":"779"},"Viljamovka|1000":{"f":"1613","e":"662"},"Disaronno|1000":{"e":"836"},"Fernet|700":{"f":"1147"},"Hendrick's|700":{"f":"1243"},"Malibu|1000":{"f":"1624"},"Southern Comfort|700":{"f":"1200"},"White Horse|750":{"f":"1191"}});
+if(!sizes['Disaronno'])sizes['Disaronno']='1000';
+
 let DBREF=null,syncT=null,syncBusy=false,syncAgain=false;
 function sync(){if(!DBREF)return;clearTimeout(syncT);syncT=setTimeout(push,600)}
 async function push(){
 if(!DBREF)return;
 if(syncBusy){syncAgain=true;return}
 syncBusy=true;
-try{await DBREF.set({v:1,items:items,wts:wts,sizes:sizes})}catch(e){}
+try{await DBREF.set({v:1,items:items,wts:wts,sizes:sizes,custom:customs})}catch(e){}
 syncBusy=false;
 if(syncAgain){syncAgain=false;push()}
 }
@@ -560,12 +651,14 @@ if(d&&!touched){
 if(Array.isArray(d.items))items=d.items.filter(okItem);
 if(d.wts&&typeof d.wts==='object')wts=Object.assign({},wts,d.wts);
 if(d.sizes&&typeof d.sizes==='object')sizes=Object.assign({},sizes,d.sizes);
+if(Array.isArray(d.custom))d.custom.forEach(c=>{if(c&&c.name&&!customs.some(x=>x.name===c.name&&x.v===c.v)){customs.push(c);addCustomOption(c)}});
+saveCustoms();
 try{localStorage.setItem('bar_items',JSON.stringify(items));localStorage.setItem('bar_weights',JSON.stringify(wts));localStorage.setItem('bar_sizes',JSON.stringify(sizes))}catch(e){}
 render();loadW();calc();
 DBREF=ref;
 }else{
 DBREF=ref;
-if(touched||items.length||Object.keys(wts).length)push();
+if(touched||items.length||customs.length||Object.keys(wts).length)push();
 }
 try{
 const sc=await COL.get();
@@ -579,6 +672,44 @@ try{if(!localStorage.getItem('bar_name')&&saved.length){const lt=ordered().pop()
 }catch(e){}
 }catch(e){}
 }
+$('nv').innerHTML=$('vol').innerHTML;$('nv').value='1000';
+$('newbtn').onclick=()=>{const f=$('newform');f.hidden=!f.hidden;if(!f.hidden)$('nn').focus()};
+$('ncancel').onclick=()=>{$('newform').hidden=true;$('nerr').textContent=''};
+$('nsave').onclick=()=>{
+const name=$('nn').value.replace(/[|]/g,' ').replace(/\s+/g,' ').trim(),d=$('ng').value,v=$('nv').value,f=+$('nf').value,e=$('ne').value.trim()===''?0:+$('ne').value;
+if(!name){$('nerr').textContent='Shkruaj emrin e pijes.';return}
+if(!(f>0)&&!(e>0)){$('nerr').textContent='Shkruaj peshën e shishes së plotë ose të zbrazët (në gram).';return}
+if(f>0&&e&&!(f>e)){$('nerr').textContent='Pesha e plotë duhet të jetë më e madhe se e zbrazëta.';return}
+if(f>0&&f<+v*0.5){$('nerr').textContent='Pesha duket shumë e vogël për këtë madhësi. Kontrollo numrin.';return}
+if(!(f>0)&&e<+v*0.1){$('nerr').textContent='Pesha e zbrazët duket shumë e vogël. Kontrollo numrin.';return}
+$('nerr').textContent='';
+const c={name:name,d:d,v:v,g:GM[$('ng').selectedOptions[0].text]||''};
+const ec=customs.find(x=>x.name===name&&x.v===v);if(!ec){customs.push(c);saveCustoms()}else if(ec.hid){delete ec.hid;saveCustoms()}
+const o=addCustomOption(c);
+wts[name+'|'+v]={f:f>0?String(f):'',e:e?String(e):''};
+try{localStorage.setItem('bar_weights',JSON.stringify(wts))}catch(err){}
+touched=true;sync();
+$('type').value=o.value;pick();updDel();
+$('nn').value='';$('nf').value='';$('ne').value='';$('newform').hidden=true;
+say('U ruajt "'+name+'". Tani shkruaj peshën në peshore.');window.scrollTo({top:0,behavior:'smooth'});
+};
+$('wsave').onclick=()=>{
+const f=$('full').value.trim(),e=$('empty').value.trim();
+if(f===''&&e===''){say('Shkruaj fillimisht peshën e plotë ose të zbrazët.');return}
+saveW();
+const nm=$('type').value.split('|')[2]+' '+$('vol').selectedOptions[0].text;
+say('U ruajt pesha për '+nm+'.');
+};
+$('type').addEventListener('change',updDel);
+const _choose=choose;choose=function(o){_choose(o);updDel()};
+let delT=null;
+$('wdel').onclick=()=>{
+const o=$('type').selectedOptions[0];if(!isCustom(o))return;
+if(delT===null){$('wdel').textContent='Sigurt? Prek përsëri';delT=setTimeout(()=>{delT=null;$('wdel').textContent='Fshi këtë pije'},3000);return}
+clearTimeout(delT);delT=null;$('wdel').textContent='Fshi këtë pije';
+const p=o.value.split('|');delCustom({d:p[0],name:p[2],v:p[3]});say('Pija u fshi.');
+};
+updDel();
 cloudInit();
 pick();render();renderSaved();
 </script>
